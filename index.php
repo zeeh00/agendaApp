@@ -13,7 +13,7 @@ $result = $conn->query($sql);
     <title>Agenda App</title>
 </head>
 <body>
-    <h1>Threads</h1>
+    <h1>This is Agenda App</h1>
     <?php while($row = $result->fetch_assoc()): ?>
         <h2><?php echo $row['title']; ?></h2>
         <p><?php echo $row['content']; ?></p>
