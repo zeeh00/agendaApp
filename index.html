@@ -6,29 +6,37 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Threads</h1>
-    <div id="threads">
-        <!-- Threads will be dynamically loaded here -->
-        <?php
-        // Include your PHP code here to fetch and display threads from the database
-        include('db.php');
+    <div class="container">
+        <h1>Threads</h1>
         
-        // Example query to fetch threads from the database
-        $sql = "SELECT * FROM threads";
-        $result = $conn->query($sql);
+        <!-- Logout Button -->
+        <form action="logout.php" method="post">
+            <button type="submit" class="logout-button">Logout</button>
+        </form>
+        
+        <div id="threads">
+            <!-- Threads will be dynamically loaded here -->
+            <?php
+            // Include your PHP code here to fetch and display threads from the database
+            include('db.php');
+            
+            // Example query to fetch threads from the database
+            $sql = "SELECT * FROM threads";
+            $result = $conn->query($sql);
 
-        if ($result->num_rows > 0) {
-            // Output data of each row
-            while($row = $result->fetch_assoc()) {
-                echo "<div class='thread'>";
-                echo "<h2>" . $row["title"] . "</h2>";
-                echo "<p>" . $row["content"] . "</p>";
-                echo "</div>";
+            if ($result->num_rows > 0) {
+                // Output data of each row
+                while($row = $result->fetch_assoc()) {
+                    echo "<div class='thread'>";
+                    echo "<h2>" . $row["title"] . "</h2>";
+                    echo "<p>" . $row["content"] . "</p>";
+                    echo "</div>";
+                }
+            } else {
+                echo "0 results";
             }
-        } else {
-            echo "0 results";
-        }
-        ?>
+            ?>
+        </div>
     </div>
 </body>
 </html>
