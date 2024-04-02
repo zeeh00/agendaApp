@@ -16,26 +16,6 @@
         
         <div id="threads">
             <!-- Threads will be dynamically loaded here -->
-            <?php
-            // Include your PHP code here to fetch and display threads from the database
-            include('db.php');
-            
-            // Example query to fetch threads from the database
-            $sql = "SELECT * FROM threads";
-            $result = $conn->query($sql);
-
-            if ($result->num_rows > 0) {
-                // Output data of each row
-                while($row = $result->fetch_assoc()) {
-                    echo "<div class='thread'>";
-                    echo "<h2>" . $row["title"] . "</h2>";
-                    echo "<p>" . $row["content"] . "</p>";
-                    echo "</div>";
-                }
-            } else {
-                echo "0 results";
-            }
-            ?>
         </div>
     </div>
 </body>
