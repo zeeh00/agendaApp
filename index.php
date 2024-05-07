@@ -33,6 +33,7 @@ $result_user = $conn->query($sql_user);
 if ($result_user->num_rows == 1) {
     $user = $result_user->fetch_assoc();
     $username = $user['username'];
+    $user_role = $user['role']; // Get user's role
 } else {
     // Handle error if user not found
     $username = "Unknown";
@@ -59,11 +60,24 @@ $result = $conn->query($sql);
     <form action="" method="post">
         <button type="submit" name="logout">Logout</button>
     </form>
+
+    <!-- Add Threads Button (only for admin) -->
+    <?php if ($user_role === 'admin'): ?>
+        <button onclick="location.href='admin_panel.html'" class="add-threads-button">Add Threads</button>
+    <?php endif; ?>
     
     <!-- Threads -->
     <?php while ($row = $result->fetch_assoc()): ?>
-        <h2><?php echo $row['title']; ?></h2>
-        <p><?php echo $row['content']; ?></p>
+        <div class="thread">
+            <h2><?php echo $row['title']; ?></h2>
+            <p><?php echo $row['content']; ?></p>
+
+            <!-- Edit and Delete Buttons (only for admin) -->
+            <?php if ($user_role === 'admin'): ?>
+                <button onclick="location.href='edit_thread.php?id=<?php echo $row['id']; ?>'" class="edit-button">Edit</button>
+                <button onclick="location.href='delete_thread.php?id=<?php echo $row['id']; ?>'" class="delete-button">Delete</button>
+            <?php endif; ?>
+        </div>
     <?php endwhile; ?>
 </body>
 </html>
