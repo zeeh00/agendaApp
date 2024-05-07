@@ -19,15 +19,13 @@ $result_user = $conn->query($sql_user);
 // Fetch user's information
 if ($result_user->num_rows == 1) {
     $user = $result_user->fetch_assoc();
-    $username = $user['username'];
 } else {
     // Handle error if user not found
-    $username = "Unknown";
+    $user = null;
 }
 
 // Check if user is admin
-$user_role = $user['role']; // Get user's role
-if ($user_role !== 'admin') {
+if ($user['role'] !== 'admin') {
     // If not admin, redirect to index.php
     header("Location: index.php");
     exit();
@@ -55,7 +53,7 @@ if ($result_thread->num_rows == 1) {
 }
 
 // Handle form submission for editing the thread
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['confirm_update'])) {
     $title = $_POST['title'];
     $content = $_POST['content'];
 
@@ -85,7 +83,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <input type="text" id="title" name="title" value="<?php echo $thread['title']; ?>"><br><br>
         <label for="content">Content:</label><br>
         <textarea id="content" name="content"><?php echo $thread['content']; ?></textarea><br><br>
-        <button type="submit">Update Thread</button>
+        <button type="submit" name="confirm_update">Update Thread</button>
+        <a href="index.php">Cancel</a>
     </form>
 </body>
 </html>
