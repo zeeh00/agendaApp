@@ -40,14 +40,47 @@ if (!isset($_GET['id'])) {
 
 $thread_id = $_GET['id'];
 
-// Delete the thread from the database
-$sql_delete = "DELETE FROM threads WHERE id='$thread_id'";
-    
-if ($conn->query($sql_delete) === TRUE) {
-    // Redirect to index.php after successful deletion
+// Fetch the thread from the database
+$sql_thread = "SELECT * FROM threads WHERE id='$thread_id'";
+$result_thread = $conn->query($sql_thread);
+
+if ($result_thread->num_rows == 1) {
+    $thread = $result_thread->fetch_assoc();
+} else {
+    // Redirect to index.php if thread not found
     header("Location: index.php");
     exit();
-} else {
-    echo "Error deleting record: " . $conn->error;
+}
+
+// Handle deletion if confirmed
+if (isset($_POST['confirm_delete'])) {
+    // Delete the thread from the database
+    $sql_delete = "DELETE FROM threads WHERE id='$thread_id'";
+        
+    if ($conn->query($sql_delete) === TRUE) {
+        // Redirect to index.php after successful deletion
+        header("Location: index.php");
+        exit();
+    } else {
+        echo "Error deleting record: " . $conn->error;
+    }
 }
 ?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Delete Thread</title>
+</head>
+<body>
+    <h1>Delete Thread</h1>
+    <p>Are you sure you want to delete this thread?</p>
+    <p>Title: <?php echo $thread['title']; ?></p>
+    <p>Content: <?php echo $thread['content']; ?></p>
+    <form action="" method="post">
+        <button type="submit" name="confirm_delete">Yes, Delete</button>
+        <a href="index.php">Cancel</a>
+    </form>
+</body>
+</html>
