@@ -71,12 +71,18 @@ if (isset($_POST['id'])) {
 } elseif (isset($_GET['confirm']) && $_GET['confirm'] == 'yes' && isset($_GET['id'])) {
     $thread_id = $_GET['id'];
 
-    // Delete the thread
-    $sql_delete = "DELETE FROM threads WHERE id='$thread_id'";
-    if ($conn->query($sql_delete) === TRUE) {
-        header("Location: index.php");
+    // Delete comments associated with the thread
+    $sql_delete_comments = "DELETE FROM comments WHERE thread_id='$thread_id'";
+    if ($conn->query($sql_delete_comments) === TRUE) {
+        // Delete the thread
+        $sql_delete_thread = "DELETE FROM threads WHERE id='$thread_id'";
+        if ($conn->query($sql_delete_thread) === TRUE) {
+            header("Location: index.php");
+        } else {
+            echo "Error deleting thread: " . $conn->error;
+        }
     } else {
-        echo "Error deleting record: " . $conn->error;
+        echo "Error deleting comments: " . $conn->error;
     }
 } else {
     header("Location: index.php");
