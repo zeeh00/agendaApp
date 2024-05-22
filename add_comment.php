@@ -8,19 +8,28 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
+// Validate and sanitize input
+$thread_id = filter_input(INPUT_POST, 'thread_id', FILTER_VALIDATE_INT);
+$content = filter_input(INPUT_POST, 'content', FILTER_SANITIZE_STRING);
+
+if ($_SERVER["REQUEST_METHOD"] == "POST" && $thread_id && $content) {
     $user_id = $_SESSION['user_id'];
-    $thread_id = $_POST['thread_id'];
-    $content = $_POST['content'];
 
-    // Insert the new comment into the database
-    $sql = "INSERT INTO comments (thread_id, user_id, content) VALUES ('$thread_id', '$user_id', '$content')";
+    // Use prepared statement to insert the new comment into the database
+    $sql = "INSERT INTO comments (thread_id, user_id, content) VALUES (?, ?, ?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("iis", $thread_id, $user_id, $content);
 
-    if ($conn->query($sql) === TRUE) {
+    if ($stmt->execute()) {
+        // Redirect to the thread page after successful comment addition
         header("Location: thread.php?id=" . $thread_id);
         exit();
     } else {
         echo "Error: " . $sql . "<br>" . $conn->error;
     }
+} else {
+    // Invalid or missing input, redirect to index.php
+    header("Location: index.php");
+    exit();
 }
 ?>

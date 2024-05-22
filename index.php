@@ -23,26 +23,31 @@ if (isset($_POST['logout'])) {
 }
 
 // Get user information from session variables
-$user_id = $_SESSION['user_id'];
+$user_id = filter_var($_SESSION['user_id'], FILTER_VALIDATE_INT);
 
-// Query to get user's information
-$sql_user = "SELECT * FROM users WHERE id='$user_id'";
-$result_user = $conn->query($sql_user);
+// Query to get user's information (using prepared statement)
+$sql_user = "SELECT * FROM users WHERE id=?";
+$stmt_user = $conn->prepare($sql_user);
+$stmt_user->bind_param("i", $user_id);
+$stmt_user->execute();
+$result_user = $stmt_user->get_result();
 
 // Fetch user's information
 if ($result_user->num_rows == 1) {
     $user = $result_user->fetch_assoc();
-    $username = $user['username'];
-    $user_role = $user['role'];
+    $username = htmlspecialchars($user['username']);
+    $user_role = htmlspecialchars($user['role']);
 } else {
     // Handle error if user not found
     $username = "Unknown";
     $user_role = "user";
 }
 
-// Fetch threads from the database
-$sql = "SELECT * FROM threads";
-$result = $conn->query($sql);
+// Fetch threads from the database (using prepared statement)
+$sql_threads = "SELECT * FROM threads";
+$stmt_threads = $conn->prepare($sql_threads);
+$stmt_threads->execute();
+$result = $stmt_threads->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -55,7 +60,7 @@ $result = $conn->query($sql);
 <body>
     <div class="container">
         <h1>Welcome to Free Agenda App</h1>
-        <p>Logged in as: <?php echo htmlspecialchars($username); ?> (Role: <?php echo htmlspecialchars($user_role); ?>)</p>
+        <p>Logged in as: <?php echo $username; ?> (Role: <?php echo $user_role; ?>)</p>
         <p>Click on the specific thread to view and add comments !!!</p>
 
         <!-- Logout Form -->
@@ -74,17 +79,17 @@ $result = $conn->query($sql);
             <!-- Threads -->
             <?php while ($row = $result->fetch_assoc()): ?>
                 <div class="thread">
-                    <h2><a href="thread.php?id=<?php echo $row['id']; ?>"><?php echo htmlspecialchars($row['title']); ?></a></h2>
+                    <h2><a href="thread.php?id=<?php echo htmlspecialchars($row['id']); ?>"><?php echo htmlspecialchars($row['title']); ?></a></h2>
                     <p><?php echo nl2br(htmlspecialchars($row['content'])); ?></p>
                     
                     <!-- Edit and Delete Buttons for Admin -->
                     <?php if ($user_role == 'admin'): ?>
                         <form action="edit_thread.php" method="get" style="display:inline;">
-                            <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                            <input type="hidden" name="id" value="<?php echo htmlspecialchars($row['id']); ?>">
                             <button type="submit">Edit</button>
                         </form>
                         <form action="delete_thread.php" method="post" style="display:inline;">
-                            <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                            <input type="hidden" name="id" value="<?php echo htmlspecialchars($row['id']); ?>">
                             <button type="submit">Delete</button>
                         </form>
                     <?php endif; ?>

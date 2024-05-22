@@ -2,35 +2,40 @@
 session_start();
 include('db.php');
 
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.html");
-    exit();
-}
-
-// Check if user is admin
-$user_id = $_SESSION['user_id'];
-$sql_user = "SELECT * FROM users WHERE id='$user_id' AND role='admin'";
-$result_user = $conn->query($sql_user);
-
-if ($result_user->num_rows != 1) {
-    // Redirect non-admin users to index.php
+// Check if user is logged in and is admin
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header("Location: index.php");
     exit();
 }
 
 // Proceed with creating a new thread
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $title = $_POST['title'];
-    $content = $_POST['content'];
-    $user_id = $_SESSION['user_id'];
+    // Validate and sanitize input
+    $title = filter_input(INPUT_POST, 'title', FILTER_SANITIZE_STRING);
+    $content = filter_input(INPUT_POST, 'content', FILTER_SANITIZE_STRING);
 
-    $sql = "INSERT INTO threads (title, content, user_id) VALUES ('$title', '$content', '$user_id')";
+    // Prepare the SQL statement
+    $sql = "INSERT INTO threads (title, content, user_id) VALUES (?, ?, ?)";
+    $stmt = $conn->prepare($sql);
 
-    if ($conn->query($sql) === TRUE) {
-        header("location: index.php");
+    if (!$stmt) {
+        // Handle SQL error
+        echo "Error: " . $conn->error;
     } else {
-        echo "Error: " . $sql . "<br>" . $conn->error;
+        // Bind parameters and execute the statement
+        $stmt->bind_param("ssi", $title, $content, $_SESSION['user_id']);
+        $result = $stmt->execute();
+
+        if ($result) {
+            // Redirect to index.php after successful thread creation
+            header("Location: index.php");
+            exit();
+        } else {
+            // Handle SQL error
+            echo "Error: " . $stmt->error;
+        }
+
+        $stmt->close();
     }
 }
 ?>

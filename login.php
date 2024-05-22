@@ -89,6 +89,7 @@ function handleInvalidLoginAttempt() {
                 if (remainingTime <= 0) {
                     clearInterval(interval);
                     countdownElement.innerHTML = '';
+                    window.location.reload(); // Reload the page to clear suspension message
                 } else {
                     countdownElement.innerHTML = `Please try again after ${remainingTime} seconds.`;
                     remainingTime--;
@@ -98,7 +99,10 @@ function handleInvalidLoginAttempt() {
     </script>
 </head>
 <body>
+    <h1>!!! WELCOME TO AGENDA APP by MARTZEVANCIO DANIEL EDBERT - 2301943030 !!!</h1>
     <h2>Login</h2>
+    <h3>If you already have account, please login...</h3>
+    <h4>If you don't have any account yet, please register first !!!</h4>
     <?php if ($error): ?>
         <p style="color: red;"><?php echo htmlspecialchars($error); ?></p>
     <?php endif; ?>

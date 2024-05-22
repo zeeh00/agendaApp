@@ -5,34 +5,39 @@ include('db.php');
 $error = '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);
-    $password = filter_input(INPUT_POST, 'password', FILTER_SANITIZE_STRING);
+    $username = trim($_POST['username']); // Remove leading/trailing whitespaces
+    $password = $_POST['password'];
 
-    // Check if username already exists
-    $stmt = $conn->prepare("SELECT * FROM users WHERE username = ?");
-    $stmt->bind_param("s", $username);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows > 0) {
-        $error = "Username already exists. Please choose a different username.";
+    // Validate username and password
+    if (strlen($username) < 6 || strlen($password) < 8) {
+        $error = "Username must be at least 6 characters long and password must be at least 8 characters long.";
     } else {
-        // Insert new user into database with default role 'user'
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-        $default_role = 'user';
-        $stmt = $conn->prepare("INSERT INTO users (username, password, role) VALUES (?, ?, ?)");
-        $stmt->bind_param("sss", $username, $hashed_password, $default_role);
+        // Check if username already exists
+        $stmt = $conn->prepare("SELECT * FROM users WHERE username = ?");
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
 
-        if ($stmt->execute()) {
-            // Redirect to login page after successful registration
-            header("Location: login.php");
-            exit();
+        if ($result->num_rows > 0) {
+            $error = "Username already exists. Please choose a different username.";
         } else {
-            $error = "Error: " . $stmt->error;
-        }
-    }
+            // Insert new user into database with default role 'user'
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            $default_role = 'user';
+            $stmt = $conn->prepare("INSERT INTO users (username, password, role) VALUES (?, ?, ?)");
+            $stmt->bind_param("sss", $username, $hashed_password, $default_role);
 
-    $stmt->close();
+            if ($stmt->execute()) {
+                // Redirect to login page after successful registration
+                header("Location: login.php");
+                exit();
+            } else {
+                $error = "Error: Unable to register. Please try again later.";
+            }
+        }
+
+        $stmt->close();
+    }
 }
 ?>
 
@@ -50,9 +55,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <?php endif; ?>
     <form action="register.php" method="post">
         <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required>
+        <input type="text" id="username" name="username" minlength="6" required>
         <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required>
+        <input type="password" id="password" name="password" minlength="8" required>
         <button type="submit">Register</button>
     </form>
     <br>

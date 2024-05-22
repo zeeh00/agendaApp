@@ -4,21 +4,23 @@ include('db.php');
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: login.html");
+    header("Location: login.php");
     exit();
 }
 
-// Get the thread ID from the URL
+// Check if thread ID is provided
 if (!isset($_GET['id'])) {
     header("Location: index.php");
     exit();
 }
 
-$thread_id = $_GET['id'];
+$thread_id = filter_var($_GET['id'], FILTER_VALIDATE_INT);
 
-// Fetch the thread details
-$sql_thread = "SELECT * FROM threads WHERE id='$thread_id'";
-$result_thread = $conn->query($sql_thread);
+// Fetch the thread details (using prepared statement)
+$stmt_thread = $conn->prepare("SELECT * FROM threads WHERE id=?");
+$stmt_thread->bind_param("i", $thread_id);
+$stmt_thread->execute();
+$result_thread = $stmt_thread->get_result();
 
 if ($result_thread->num_rows == 1) {
     $thread = $result_thread->fetch_assoc();
@@ -27,14 +29,18 @@ if ($result_thread->num_rows == 1) {
     exit();
 }
 
-// Fetch comments for the thread
-$sql_comments = "SELECT comments.content, users.username FROM comments JOIN users ON comments.user_id = users.id WHERE comments.thread_id = '$thread_id'";
-$result_comments = $conn->query($sql_comments);
+// Fetch comments for the thread (using prepared statement)
+$stmt_comments = $conn->prepare("SELECT comments.content, users.username FROM comments JOIN users ON comments.user_id = users.id WHERE comments.thread_id = ?");
+$stmt_comments->bind_param("i", $thread_id);
+$stmt_comments->execute();
+$result_comments = $stmt_comments->get_result();
 
 // Get user information
 $user_id = $_SESSION['user_id'];
-$sql_user = "SELECT * FROM users WHERE id='$user_id'";
-$result_user = $conn->query($sql_user);
+$stmt_user = $conn->prepare("SELECT * FROM users WHERE id=?");
+$stmt_user->bind_param("i", $user_id);
+$stmt_user->execute();
+$result_user = $stmt_user->get_result();
 
 if ($result_user->num_rows == 1) {
     $user = $result_user->fetch_assoc();

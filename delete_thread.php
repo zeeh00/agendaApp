@@ -2,24 +2,9 @@
 session_start();
 include('db.php');
 
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.html");
-    exit();
-}
-
-// Check if user is admin
-$user_id = $_SESSION['user_id'];
-$sql_user = "SELECT role FROM users WHERE id='$user_id'";
-$result_user = $conn->query($sql_user);
-
-if ($result_user->num_rows == 1) {
-    $user = $result_user->fetch_assoc();
-    if ($user['role'] != 'admin') {
-        header("Location: index.php");
-        exit();
-    }
-} else {
+// Check if user is logged in and is admin
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    // Redirect non-admin users to index.php
     header("Location: index.php");
     exit();
 }
@@ -30,19 +15,42 @@ if (!isset($_POST['id']) && !isset($_GET['confirm']) && !isset($_GET['id'])) {
     exit();
 }
 
-if (isset($_POST['id'])) {
-    $thread_id = $_POST['id'];
-    
-    // Fetch thread details
-    $sql_thread = "SELECT title FROM threads WHERE id='$thread_id'";
-    $result_thread = $conn->query($sql_thread);
+// Handle deletion confirmation
+if (isset($_GET['confirm']) && $_GET['confirm'] == 'yes' && isset($_GET['id'])) {
+    $thread_id = $_GET['id'];
 
-    if ($result_thread->num_rows != 1) {
-        header("Location: index.php");
-        exit();
+    // Use prepared statements to delete comments associated with the thread
+    $sql_delete_comments = "DELETE FROM comments WHERE thread_id=?";
+    $stmt_comments = $conn->prepare($sql_delete_comments);
+    $stmt_comments->bind_param("i", $thread_id);
+    if ($stmt_comments->execute()) {
+        // Use prepared statements to delete the thread
+        $sql_delete_thread = "DELETE FROM threads WHERE id=?";
+        $stmt_thread = $conn->prepare($sql_delete_thread);
+        $stmt_thread->bind_param("i", $thread_id);
+        if ($stmt_thread->execute()) {
+            // Redirect to index.php after successful deletion
+            header("Location: index.php");
+            exit();
+        } else {
+            echo "Error deleting thread: " . $conn->error;
+        }
+    } else {
+        echo "Error deleting comments: " . $conn->error;
     }
+} elseif (isset($_POST['id'])) {
+    // If thread ID is provided via POST, display confirmation prompt
+    $thread_id = $_POST['id'];
 
-    $thread = $result_thread->fetch_assoc();
+    // Fetch thread details
+    $sql_thread = "SELECT title FROM threads WHERE id=?";
+    $stmt_thread = $conn->prepare($sql_thread);
+    $stmt_thread->bind_param("i", $thread_id);
+    $stmt_thread->execute();
+    $result_thread = $stmt_thread->get_result();
+
+    if ($result_thread->num_rows == 1) {
+        $thread = $result_thread->fetch_assoc();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -68,21 +76,9 @@ if (isset($_POST['id'])) {
 </body>
 </html>
 <?php
-} elseif (isset($_GET['confirm']) && $_GET['confirm'] == 'yes' && isset($_GET['id'])) {
-    $thread_id = $_GET['id'];
-
-    // Delete comments associated with the thread
-    $sql_delete_comments = "DELETE FROM comments WHERE thread_id='$thread_id'";
-    if ($conn->query($sql_delete_comments) === TRUE) {
-        // Delete the thread
-        $sql_delete_thread = "DELETE FROM threads WHERE id='$thread_id'";
-        if ($conn->query($sql_delete_thread) === TRUE) {
-            header("Location: index.php");
-        } else {
-            echo "Error deleting thread: " . $conn->error;
-        }
     } else {
-        echo "Error deleting comments: " . $conn->error;
+        header("Location: index.php");
+        exit();
     }
 } else {
     header("Location: index.php");

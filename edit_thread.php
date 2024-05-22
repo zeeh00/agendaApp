@@ -2,31 +2,9 @@
 session_start();
 include('db.php');
 
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    // User is not logged in, redirect to login page
-    header("Location: login.html");
-    exit();
-}
-
-// Get user information from session variables
-$user_id = $_SESSION['user_id'];
-
-// Query to get user's information
-$sql_user = "SELECT * FROM users WHERE id='$user_id'";
-$result_user = $conn->query($sql_user);
-
-// Fetch user's information
-if ($result_user->num_rows == 1) {
-    $user = $result_user->fetch_assoc();
-} else {
-    // Handle error if user not found
-    $user = null;
-}
-
-// Check if user is admin
-if ($user['role'] !== 'admin') {
-    // If not admin, redirect to index.php
+// Check if user is logged in and is admin
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    // Redirect non-admin users to index.php
     header("Location: index.php");
     exit();
 }
@@ -41,8 +19,11 @@ if (!isset($_GET['id'])) {
 $thread_id = $_GET['id'];
 
 // Fetch the thread from the database
-$sql_thread = "SELECT * FROM threads WHERE id='$thread_id'";
-$result_thread = $conn->query($sql_thread);
+$sql_thread = "SELECT * FROM threads WHERE id=?";
+$stmt = $conn->prepare($sql_thread);
+$stmt->bind_param("i", $thread_id);
+$stmt->execute();
+$result_thread = $stmt->get_result();
 
 if ($result_thread->num_rows == 1) {
     $thread = $result_thread->fetch_assoc();
@@ -57,10 +38,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['confirm_update'])) {
     $title = $_POST['title'];
     $content = $_POST['content'];
 
-    // Update the thread in the database
-    $sql_update = "UPDATE threads SET title='$title', content='$content' WHERE id='$thread_id'";
-    
-    if ($conn->query($sql_update) === TRUE) {
+    // Update the thread in the database using prepared statements
+    $sql_update = "UPDATE threads SET title=?, content=? WHERE id=?";
+    $stmt = $conn->prepare($sql_update);
+    $stmt->bind_param("ssi", $title, $content, $thread_id);
+
+    if ($stmt->execute()) {
         // Redirect to index.php after successful update
         header("Location: index.php");
         exit();
@@ -80,9 +63,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['confirm_update'])) {
     <h1>Edit Thread</h1>
     <form action="" method="post">
         <label for="title">Title:</label><br>
-        <input type="text" id="title" name="title" value="<?php echo $thread['title']; ?>"><br><br>
+        <input type="text" id="title" name="title" value="<?php echo htmlspecialchars($thread['title']); ?>"><br><br>
         <label for="content">Content:</label><br>
-        <textarea id="content" name="content"><?php echo $thread['content']; ?></textarea><br><br>
+        <textarea id="content" name="content"><?php echo htmlspecialchars($thread['content']); ?></textarea><br><br>
         <button type="submit" name="confirm_update">Update Thread</button>
         <a href="index.php">Cancel</a>
     </form>
