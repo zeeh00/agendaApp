@@ -5,7 +5,7 @@ include('db.php');
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     // User is not logged in, redirect to login page
-    header("Location: login.html");
+    header("Location: login.php");
     exit();
 }
 
@@ -18,7 +18,7 @@ if (isset($_POST['logout'])) {
     session_destroy();
 
     // Redirect to login page after logout
-    header("Location: login.html");
+    header("Location: login.php");
     exit();
 }
 
@@ -56,7 +56,7 @@ $result = $conn->query($sql);
     <div class="container">
         <h1>Welcome to Free Agenda App</h1>
         <p>Logged in as: <?php echo htmlspecialchars($username); ?> (Role: <?php echo htmlspecialchars($user_role); ?>)</p>
-        <p>Click on each thread to add comments !!!</p>
+        <p>Click on the specific thread to view and add comments !!!</p>
 
         <!-- Logout Form -->
         <form action="" method="post">
@@ -83,7 +83,7 @@ $result = $conn->query($sql);
                             <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
                             <button type="submit">Edit</button>
                         </form>
-                        <form action="delete_thread.php" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this thread?');">
+                        <form action="delete_thread.php" method="post" style="display:inline;">
                             <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
                             <button type="submit">Delete</button>
                         </form>
