@@ -33,12 +33,14 @@ $result_user = $conn->query($sql_user);
 if ($result_user->num_rows == 1) {
     $user = $result_user->fetch_assoc();
     $username = $user['username'];
-    $user_role = $user['role']; // Get user's role
+    $user_role = $user['role'];
 } else {
     // Handle error if user not found
     $username = "Unknown";
+    $user_role = "user";
 }
 
+// Fetch threads from the database
 $sql = "SELECT * FROM threads";
 $result = $conn->query($sql);
 ?>
@@ -47,37 +49,48 @@ $result = $conn->query($sql);
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Agenda App</title>
+    <title>Agenda App - Home</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Header -->
-    <header>
+    <div class="container">
         <h1>Welcome to Free Agenda App</h1>
-        <p>Logged in as: <?php echo $username; ?></p>
-    </header>
-    
-    <!-- Logout Form -->
-    <form action="" method="post">
-        <button type="submit" name="logout">Logout</button>
-    </form>
+        <p>Logged in as: <?php echo htmlspecialchars($username); ?> (Role: <?php echo htmlspecialchars($user_role); ?>)</p>
+        <p>Click on each thread to add comments !!!</p>
 
-    <!-- Add Threads Button (only for admin) -->
-    <?php if ($user_role === 'admin'): ?>
-        <button onclick="location.href='admin_panel.html'" class="add-threads-button">Add Threads</button>
-    <?php endif; ?>
-    
-    <!-- Threads -->
-    <?php while ($row = $result->fetch_assoc()): ?>
-        <div class="thread">
-            <h2><?php echo $row['title']; ?></h2>
-            <p><?php echo $row['content']; ?></p>
+        <!-- Logout Form -->
+        <form action="" method="post">
+            <button type="submit" name="logout">Logout</button>
+        </form>
 
-            <!-- Edit and Delete Buttons (only for admin) -->
-            <?php if ($user_role === 'admin'): ?>
-                <button onclick="location.href='edit_thread.php?id=<?php echo $row['id']; ?>'" class="edit-button">Edit</button>
-                <button onclick="location.href='delete_thread.php?id=<?php echo $row['id']; ?>'" class="delete-button">Delete</button>
-            <?php endif; ?>
+        <!-- Add Thread Button for Admin -->
+        <?php if ($user_role == 'admin'): ?>
+            <form action="create_thread.php" method="get">
+                <button type="submit">Add New Thread</button>
+            </form>
+        <?php endif; ?>
+
+        <div id="threads">
+            <!-- Threads -->
+            <?php while ($row = $result->fetch_assoc()): ?>
+                <div class="thread">
+                    <h2><a href="thread.php?id=<?php echo $row['id']; ?>"><?php echo htmlspecialchars($row['title']); ?></a></h2>
+                    <p><?php echo nl2br(htmlspecialchars($row['content'])); ?></p>
+                    
+                    <!-- Edit and Delete Buttons for Admin -->
+                    <?php if ($user_role == 'admin'): ?>
+                        <form action="edit_thread.php" method="get" style="display:inline;">
+                            <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                            <button type="submit">Edit</button>
+                        </form>
+                        <form action="delete_thread.php" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this thread?');">
+                            <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                            <button type="submit">Delete</button>
+                        </form>
+                    <?php endif; ?>
+                </div>
+            <?php endwhile; ?>
         </div>
-    <?php endwhile; ?>
+    </div>
 </body>
 </html>
